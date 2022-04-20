@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'commission',
+    'insurance',
 ]
 REST_FRAMEWORK = {
     'DATE_INPUT_FORMATS': ["%Y-%m-%d %H:%M:%S", ],

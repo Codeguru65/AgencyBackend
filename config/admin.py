@@ -4,6 +4,50 @@ from authentication.models import Institution
 from config.models import AgencyPricing, InsuranceApiUrlConfig
 
 
+from config.models import *
+
+
+@admin.register(IceCashEndpoint)
+class EndpointsAdmin(admin.ModelAdmin):
+    list_editable = ['api_endpoint', 'active_status']
+    list_display = ['api_name', 'api_endpoint', 'active_status', 'env_status']
+    exclude = ['added_by', ]
+
+    def save_model(self, request, obj, form, change):
+        obj.added_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(InvoiceCount)
+class InvoiceCountAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ReceiptCount)
+class ReceiptCountAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(PolicyScheduleCount)
+class PolicyScheduleCountAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(InvoicePrefix)
+class InvoicePrefixAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ReceiptPrefix)
+class ReceiptPrefixAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(PolicySchedulePrefix)
+class PolicySchedulePrefixAdmin(admin.ModelAdmin):
+    pass
+
+
 class InstituionsInline(admin.TabularInline):
     model = Institution
     list_display = ('name',)

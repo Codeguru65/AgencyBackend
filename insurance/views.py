@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from authentication.models import User
 
 # imports from yako
-from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, ThirdPartyZinaraQoute, ZinaraQuote
+from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, ThirdPartyZinaraQoute, ZinaraQuote,LicensingPayment, LicensingPolicy
 from config.models import InsuranceApiUrlConfig
 
 # Third Party Only Quote
@@ -202,12 +202,16 @@ class LicensingView(views.APIView):
             msisdn = request.GET.get('client_mobile')
             deliveryMethod = request.GET.get('delivery_method')
             try:
-                payment_update = requests.get(
-                    LicensingUpdate()[0]['api_endpoint'] + '?payment_method=' + paymentMethod +
-                    '&client_idnumber=' + IDnumber + '&licence_id=' + licenceID +
-                    '&payment_status' + payment_status + '&client_mobile='
-                    + msisdn + '&delivery_method=' + deliveryMethod)
-                res = payment_update.json()
+                # payment_update = requests.get(
+                #     LicensingUpdate()[0]['api_endpoint'] + '?payment_method=' + paymentMethod +
+                #     '&client_idnumber=' + IDnumber + '&licence_id=' + licenceID +
+                #     '&payment_status' + payment_status + '&client_mobile='
+                #     + msisdn + '&delivery_method=' + deliveryMethod)
+
+                tran_update = requests.get(LicensingPayment() + '?payment_method=' + paymentMethod +
+                                           '&client_idnumber=' + IDnumber + '&licence_id=' + licenceID +
+                                           '&payment_status=' + payment_status + "&client_mobile=" + msisdn  + "&request_type=2" + "&delivery_method=" + deliveryMethod)
+                res = tran_update.json()
                 print(res, 'Json request')
                 return Response(res, status=status.HTTP_200_OK)
 
@@ -219,7 +223,7 @@ class LicensingView(views.APIView):
             licenceID = request.GET.get('licence_id')
 
             try:
-                retrieve_policy = requests.get(LicensingPolicy()[0]['api_endpoint'] + '?licence_id=' + licenceID)
+                retrieve_policy = requests.get(LicensingPolicy() + '?licence_id=' + licenceID)
                 res = retrieve_policy.json()
                 print(res, 'Json request')
                 return Response(res, status=status.HTTP_200_OK)

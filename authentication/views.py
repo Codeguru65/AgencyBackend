@@ -25,8 +25,8 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from .utils import Util
-from django.shortcuts import redirect
-from django.http import HttpResponsePermanentRedirect
+from django.shortcuts import redirect, get_object_or_404
+from django.http import HttpResponsePermanentRedirect, JsonResponse
 import os
 from django.template import Context
 from django.template.loader import render_to_string, get_template
@@ -87,6 +87,20 @@ class RegisterView(generics.GenericAPIView):
         # print(data)
         Util.send_email(data)
         return Response(response, status=status.HTTP_201_CREATED)
+
+@permission_classes((AllowAny,))
+class DeleteUser(views.APIView):
+    
+    def delete(self, request, id):
+        user = get_object_or_404(User.objects.all(), id=id) 
+        print(user.delete())
+        
+        res = {
+            'res':f'user {user} deleted'
+        }
+
+        return JsonResponse(res, safe=False)
+        
 
 
 

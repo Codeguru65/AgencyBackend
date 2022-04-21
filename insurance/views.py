@@ -11,10 +11,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from authentication.models import User
 
+# imports from yako
+from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, ThirdPartyZinaraQoute, ZinaraQuote
+from config.models import InsuranceApiUrlConfig
+
 # Third Party Only Quote
 from config.models import InsuranceApiUrlConfig
 
-from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, RadioQuote,ZinaraQuote, LicensingPayment, LicensingPolicy
+# from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, RadioQuote,ZinaraQuote, LicensingPayment, LicensingPolicy
 # from config.Endpoints import ThirdPartyQoute, ThirdPartyUpdate, ThirdPartyPolicy, LicensingQoute, LicensingPolicy, \
 #     LicensingUpdate, CombinedPolicy, CombinedUpdate, CombinedQoute, ComprehensivePolicy, REVERSAL
 
@@ -102,9 +106,11 @@ class ThirdPartyView(views.APIView):
             print(ThirdPartyQoute() + '?vrn=' + vrn + '&duration_months=' + durationMonths +
                   '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
             try:
-                quote = requests.get(
-                    ThirdPartyQoute() + '?vrn=' + vrn + '&duration_months=' + durationMonths +
-                    '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
+                # quote = requests.get(
+                #     ThirdPartyQoute() + '?vrn=' + vrn + '&duration_months=' + durationMonths +
+                #     '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
+
+                quote = requests.get(ThirdPartyQoute() + '?vrn=' + vrn + '&duration_months=' + durationMonths + '&tax_class='+tax_class + '&vrn_type='+vehicle_type)
                 res = quote.json()
                 print(res, 'Json request')
                 return Response(res, status=status.HTTP_200_OK)
@@ -162,15 +168,24 @@ class LicensingView(views.APIView):
             IDnumber = request.GET.get('client_id_number')
             radio_usage = request.GET.get('radio_usage')
             LicFrequency = request.GET.get('frequency')
+            radio_type = "0"
+            if(request.GET.get('radio_type') is not None ):
+                radio_type = request.GET.get('radio_type')
+
             product_type = request.GET.get('type')
             vehicle_type = request.query_params.get('vrn_type', None)
             tax_class = request.query_params.get('tax_class', None)
-            print(vrn, product_type, IDnumber, radio_usage, LicFrequency, vehicle_type, tax_class)
+            print('-------------------------------- DEBUG ---------------------------------')
+            print(f"vrn: { vrn }, Lic Frequency: { LicFrequency }, ID_number: { IDnumber }, radio: { radio_type }, radio type: {radio_type}")
+            print('-------------------------------- DEBUG ---------------------------------')
             try:
-                quote = requests.get(
-                    LicensingQoute()[0]['api_endpoint'] + '?vrn=' + vrn + '&type=' + product_type + '&client_id_number='
-                    + IDnumber + '&radio_usage=' + radio_usage + '&frequency=' + LicFrequency
-                    + '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
+                # quote = requests.get(
+                #     ThirdPartyZinaraQoute() + '?vrn=' + vrn + '&type=' + product_type + '&client_id_number='
+                #     + IDnumber + '&radio_usage=' + radio_usage + '&frequency=' + LicFrequency
+                #     + '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
+                
+                quote = requests.get(ZinaraQuote() + '?vrn=' + vrn + '&frequency=' + LicFrequency + '&client_id_number='
+                                     + IDnumber + "&radio_usage="+radio_usage + "&radio_type="+radio_type)
                 res = quote.json()
                 print(res, 'Json request')
                 return Response(res, status=status.HTTP_200_OK)

@@ -11,9 +11,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from authentication.models import User
 
+
+
 # imports from yako
-from apirequests.apiurls import ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, ThirdPartyZinaraQoute, ZinaraQuote,LicensingPayment, LicensingPolicy
+from apirequests.apiurls import RadioQuote, ThirdPartyQoute, CheckVehicle, ThirdPartyPayment, ThirdPartyPolicy, ThirdPartyZinaraQoute, ZinaraQuote,LicensingPayment, LicensingPolicy
 from config.models import InsuranceApiUrlConfig
+from commission.models import AgentSale
 
 # Third Party Only Quote
 from config.models import InsuranceApiUrlConfig
@@ -168,9 +171,9 @@ class LicensingView(views.APIView):
             IDnumber = request.GET.get('client_id_number')
             radio_usage = request.GET.get('radio_usage')
             LicFrequency = request.GET.get('frequency')
-            radio_type = "0"
-            if(request.GET.get('radio_type') is not None ):
-                radio_type = request.GET.get('radio_type')
+            radio_type = request.GET.get('type')
+            # if(request.GET.get('radio_type') is not None ):
+            #     radio_type = request.GET.get('radio_type')
 
             product_type = request.GET.get('type')
             vehicle_type = request.query_params.get('vrn_type', None)
@@ -184,7 +187,7 @@ class LicensingView(views.APIView):
                 #     + IDnumber + '&radio_usage=' + radio_usage + '&frequency=' + LicFrequency
                 #     + '&vrn_type=' + vehicle_type + '&tax_class=' + tax_class)
                 
-                quote = requests.get(ZinaraQuote() + '?vrn=' + vrn + '&frequency=' + LicFrequency + '&client_id_number='
+                quote = requests.get(RadioQuote() + '?vrn=' + vrn + '&frequency=' + LicFrequency + '&client_id_number='
                                      + IDnumber + "&radio_usage="+radio_usage + "&radio_type="+radio_type)
                 res = quote.json()
                 print(res, 'Json request')
@@ -297,4 +300,54 @@ class CombinedView(views.APIView):
 
             except ConnectionError as e:
                 res = {"message": "Service Unavailable, Contact Outrisk For Service"}
+                return Response(res, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+class ThirdPartyPolicyView(views.APIView):
+    insuranceID_param_config = openapi.Parameter('insuranceID', in_=openapi.IN_QUERY,
+                                                 type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(manual_parameters=[insuranceID_param_config])
+    def get(self, request):
+        insuranceID = request.GET.get('insuranceID')
+        if request.method == 'GET':
+            try:
+                quote = requests.get(ThirdPartyPolicy() + '?insuranceID=' + insuranceID)
+                res = quote.json()
+                print(res, 'Json request')
+                if res['Response']['Status'] == 'Approved':
+                    print('Qoutes Succesful lets create save the transaction now')
+                    # Process Commission Sharing
+                    owner = User.objects.get(id=request.user.id)
+                    price_category = owner.institution.agent_category.price
+                    commission = float(res['Response']['Amount']) * price_category
+
+                    print("================================================= DEBUG ====================================================")
+                    print(f"owner: {owner}, price_category: {price_category}, commision {commission}")
+                    print("================================================= DEBUG ====================================================")
+
+                    
+
+                    AgentSale.objects.create(
+                        agent=request.user,
+                        agent_category=owner.institution.agent_category.category,
+                        agent_institution=owner.institution.name,
+                        agent_pricing=owner.institution.agent_category.price,
+                        product_name='Third Party Insurance (RTA)',
+                        vrn=res['Response']['VRN'],
+                        transaction_id=insuranceID,
+                        policy_number=res['Response']['PolicyNo'],
+                        # receipt_number = res['Response']['ReceiptID'],
+                        transaction_amount=float(res['Response']['Amount']),
+                        transaction_commission=round(commission, 2),
+                        transaction_status=res['Response']['Status'],
+                        commission_month=datetime.now().strftime("%m-%Y")
+                        # transaction_date = models.DateTimeField(auto_now=True),
+                    )
+                    return Response(res, status=status.HTTP_200_OK)
+                else:
+                    message = {"message": res}
+                    return Response(message, status=status.HTTP_202_ACCEPTED)
+
+            except ConnectionError as e:
+                res = {"message": "Service Unavailable, Contact Xarani For Service"}
                 return Response(res, status=status.HTTP_503_SERVICE_UNAVAILABLE)

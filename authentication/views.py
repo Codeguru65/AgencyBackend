@@ -7,10 +7,10 @@ from rest_framework.permissions import AllowAny
 from django.views import View
 from .serializers import RegisterSerializer, SetNewPasswordSerializer, \
     EmailVerificationSerializer, LoginSerializer, LogoutSerializer, RegisterInstitutionSerializer, \
-    ResetPasswordEmailRequestSerializer
+    ResetPasswordEmailRequestSerializer, UserSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
+from .models import Institution, User
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
@@ -100,6 +100,18 @@ class DeleteUser(views.APIView):
         }
 
         return JsonResponse(res, safe=False)
+
+@permission_classes((AllowAny,))
+class UserView(views.APIView):
+    def get(self, request):
+        users = User.objects.filter(institution=request.user.id)
+
+        if users is not None:
+            serializer = UserSerializer(users, many=True)
+            res = serializer.data
+            return Response(res, status=status.HTTP_200_OK)
+        else:
+            return Response("no users")
         
 
 

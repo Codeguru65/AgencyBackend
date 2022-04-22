@@ -16,6 +16,11 @@ class RegisterInstitutionSerializer(serializers.ModelSerializer):
         model = Institution
         fields = '__all__'
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     # password = serializers.CharField(

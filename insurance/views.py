@@ -2,7 +2,9 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from datetime import datetime
 import requests
+import json
 from django.shortcuts import render
+from commission.serializer import SalesSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, views
@@ -10,6 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from authentication.models import User
+from commission.models import AgentSale
 
 # Third Party Only Quote
 from config.Endpoints import ThirdPartyQoute, ThirdPartyUpdate, ThirdPartyPolicy, LicensingQoute, LicensingPolicy, \
@@ -203,9 +206,10 @@ class LicensingView(views.APIView):
             licenceID = request.GET.get('licence_id')
 
             try:
-                retrieve_policy = requests.get(LicensingPolicy()[0]['api_endpoint'] + '?licence_id=' + licenceID)
+                retrieve_policy = requests.get(LicensingPolicy()[0]['api_endpoint'] + '?licence_id=' + licenceID + "&request_type=3")
+                print(f'i am here ---> {retrieve_policy} ')
                 res = retrieve_policy.json()
-                print(res, 'Json request')
+                # print(res, 'Json request')
                 return Response(res, status=status.HTTP_200_OK)
 
             except ConnectionError as e:
@@ -278,3 +282,53 @@ class CombinedView(views.APIView):
             except ConnectionError as e:
                 res = {"message": "Service Unavailable, Contact Outrisk For Service"}
                 return Response(res, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class AgentSaleView(views.APIView):
+    
+    def post(self, request):
+        # serializer = SalesSerializer(data=request.data)
+
+        data_unicord = request.body.decode('utf-8')
+        data  = json.loads(data_unicord)
+
+        print(f'data {data}')
+        owner = User.objects.get(id=request.user.id)
+        price_category = owner.institution.agent_category.price
+
+        commissionable = data['commissionable']
+        commission = float(commissionable) * price_category
+
+        
+
+        try:
+            AgentSale.objects.create(
+                agent=request.user,
+                agent_category=owner.institution.agent_category.category,
+                agent_institution=owner.institution.name,
+                agent_pricing=owner.institution.agent_category.price,
+                product_name=data['product_name'],
+                vrn=data['vrn'],
+                transaction_id= data['transaction_id'],
+                policy_number = data['policy_number'],
+                receipt_number=data['receipt_number'],
+                transaction_amount=data['transaction_amount'],
+                transaction_commission=round(commission, 2),
+                transaction_status=data['transaction_status'],
+                commission_month=datetime.now().strftime("%m-%Y"),
+                customer_name = data['customer_name'],
+                customer_email = data['customer_email'],
+                customer_cell = data['customer_cell'],
+                customer_IDnumber = data['customer_IDnumber']
+                )
+
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        except:
+                return Response(detail='there was an error saving the sale', status=status.HTTP_400_BAD_REQUEST)
+
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -205,7 +205,7 @@ class LicensingPolicyView(views.APIView):
                     
                     # owner = User.objects.get(id=request.user.id)
                     price_category = owner.institution.agent_category.price
-                    #commission = float(res['Response']['TotalAmount']) * price_category
+                    commission = float(res['Response']['TotalAmount']) * price_category
 
                     # for zinara only        
 

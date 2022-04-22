@@ -19,6 +19,10 @@ class AgentSale(models.Model):
     transaction_status = models.CharField(max_length=10, blank=True)
     transaction_date = models.DateTimeField(auto_now=True)
     commission_month = models.CharField(max_length=255)
+    customer_name = models.CharField(max_length=255)
+    customer_email = models.CharField(max_length=255)
+    customer_cell = models.CharField(max_length=255)
+    customer_IDnumber = models.CharField(max_length=255)
 
     class Meta:
         verbose_name = 'Agent Sales'

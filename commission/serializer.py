@@ -13,10 +13,10 @@ from commission.models import AgentSale
 class SalesSerializer(serializers.ModelSerializer):
     # default_error_messages = {
     #     'username': 'The username should only contain alphanumeric characters'}
-    agent_name= serializers.ReadOnlyField(source='agent.email')
-    transaction_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    # agent_name= serializers.ReadOnlyField(source='agent.email')
+    
 
     class Meta:
         model = AgentSale
-        fields = ['id','agent_name','agent_category','agent_institution','agent_pricing','product_name','vrn','transaction_id','policy_number','receipt_number','transaction_amount',
-                  'transaction_commission','transaction_status','transaction_date','commission_month']
+        fields = ['id','agent_category','agent_institution','agent_pricing','product_name','vrn','transaction_id','policy_number','receipt_number','transaction_amount',
+                  'transaction_commission','transaction_status','commission_month','customer_name', 'customer_email', 'customer_cell', 'customer_IDnumber']
